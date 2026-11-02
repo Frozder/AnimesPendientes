@@ -1,0 +1,780 @@
+<title>Animes por ver</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@500;600&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
+<style>
+/* Concepto: parrilla semanal de anime. Noche índigo con sakura, puntos de pantalla de manga arriba y títulos tipo sticker. */
+:root {
+  --bg: #FBEEF3;
+  --surface: #FFFFFF;
+  --ink: #2A1E3C;
+  --muted: #6B5E80;
+  --line: #EBD6E1;
+  --accent: #5642D6;
+  --accent-ink: #FFFFFF;
+  --sakura: #F2799F;
+  --sakura-ink: #2B1233;
+  --pending: #C2255C;
+  --pending-bg: #FFE1EC;
+  --danger: #B3261E;
+  --font-display: "Dela Gothic One", "Arial Black", sans-serif;
+  --font-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #150F22;
+    --surface: #211833;
+    --ink: #F4EBF8;
+    --muted: #A99CC0;
+    --line: #36284C;
+    --accent: #A99BFF;
+    --accent-ink: #150F22;
+    --sakura: #FF9DBB;
+    --sakura-ink: #2B1233;
+    --pending: #FF93B6;
+    --pending-bg: #43203A;
+    --danger: #FF8A80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #150F22;
+  --surface: #211833;
+  --ink: #F4EBF8;
+  --muted: #A99CC0;
+  --line: #36284C;
+  --accent: #A99BFF;
+  --accent-ink: #150F22;
+  --sakura: #FF9DBB;
+  --sakura-ink: #2B1233;
+  --pending: #FF93B6;
+  --pending-bg: #43203A;
+  --danger: #FF8A80;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+/* Pantalla de puntos de manga que se desvanece hacia abajo */
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto 0; height: 380px; pointer-events: none; z-index: -1;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--sakura) 40%, transparent) 1.3px, transparent 1.9px);
+  background-size: 13px 13px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cabecera */
+.head { position: relative; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(38px, 9vw, 54px); line-height: 1; letter-spacing: -0.01em; text-wrap: balance; text-shadow: 3px 3px 0 var(--sakura); }
+.date { margin: 12px 0 0; color: var(--muted); }
+.date::first-letter { text-transform: uppercase; }
+.total { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 2px solid var(--ink); border-radius: 14px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--sakura); }
+.total b { font-family: var(--font-mono); font-size: 32px; font-weight: 600; line-height: 1; color: var(--pending); font-variant-numeric: tabular-nums; }
+.total span { color: var(--muted); max-width: 11ch; line-height: 1.15; font-size: 13px; font-weight: 500; }
+.petals { position: absolute; right: 6px; top: -22px; width: 120px; height: 70px; pointer-events: none; fill: var(--sakura); }
+@media (max-width: 600px) { .petals { opacity: 0.55; right: -8px; top: -26px; } }
+
+/* Tira semanal */
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 9px 2px 8px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px;
+  min-width: 0;
+}
+.day .l { font-family: var(--font-display); font-size: 24px; line-height: 1.05; }
+.day .k { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); line-height: 1.3; }
+.day .n { margin-top: 2px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); }
+.day .n.on { color: var(--pending); }
+.day.today { border-color: var(--sakura); box-shadow: 0 3px 0 var(--sakura); }
+.day[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.day[aria-pressed="true"] .k, .day[aria-pressed="true"] .n, .day[aria-pressed="true"] .n.on { color: var(--accent-ink); }
+
+/* Controles */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 16px; color: var(--muted); font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.chk { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; font-weight: 500; }
+.chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+.hint { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* Lista */
+.groups { display: flex; flex-direction: column; gap: 22px; }
+.group-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 2px 9px; }
+.group-head h2 { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.group-head h2 .l { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--ink); color: var(--bg); font-family: var(--font-display); font-weight: 400; font-size: 19px; line-height: 1; }
+.group-head h2 .tag { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--sakura); color: var(--sakura-ink); padding: 2px 8px; border-radius: 999px; }
+.tools { display: flex; align-items: center; gap: 8px; }
+.tools .sum { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 2px; }
+.bump { height: 32px; padding: 0 13px; border: 0; border-radius: 999px; background: var(--sakura); color: var(--sakura-ink); font-weight: 700; font-size: 13px; box-shadow: 0 2px 0 color-mix(in srgb, var(--sakura-ink) 40%, transparent); }
+.bump:active { transform: translateY(1px); box-shadow: none; }
+.unbump { height: 32px; min-width: 38px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-weight: 700; font-size: 13px; }
+.rows { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.row {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr) auto auto; align-items: center; gap: 8px 12px;
+  padding: 10px 12px; border-top: 1px solid var(--line);
+}
+.row:first-child { border-top: 0; }
+.score {
+  font-family: var(--font-mono); font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums;
+  text-align: center; padding: 6px 0; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) var(--tier, 10%), var(--surface));
+  color: var(--ink);
+}
+.score.hi { color: var(--sakura-ink); background: var(--sakura); }
+.name { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
+.ctl { display: flex; align-items: center; gap: 10px; }
+.ctl select {
+  appearance: none; -webkit-appearance: none; background: transparent; border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 6px 10px; min-width: 7.2em; color: var(--ink);
+}
+.ctl select.none { color: var(--muted); }
+.count { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; }
+.count.has { border-color: var(--pending); background: var(--pending-bg); }
+.count button { width: 34px; height: 34px; border: 0; background: transparent; font-size: 18px; line-height: 1; color: var(--muted); }
+.count button:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.count.has button { color: var(--pending); }
+.count input {
+  width: 3.2em; height: 34px; border: 0; background: transparent; text-align: center; font-family: var(--font-mono); font-weight: 600; font-size: 15px;
+  font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield; padding: 0;
+}
+.count.has input { color: var(--pending); }
+.count input::-webkit-outer-spin-button, .count input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.del { width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); border-radius: 8px; font-size: 18px; line-height: 1; }
+.del:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.del.sure { width: auto; padding: 0 8px; font-size: 12px; color: var(--danger); border: 1px solid var(--danger); }
+.acts { display: flex; align-items: center; gap: 2px; }
+.act { min-width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); border-radius: 8px; font-size: 16px; line-height: 1; }
+.act:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.act.ok { background: var(--sakura); color: var(--sakura-ink); font-weight: 700; }
+.edit-name, .edit-score { width: 100%; min-width: 0; background: var(--bg); border: 1.5px solid var(--accent); border-radius: 10px; padding: 7px 10px; font-weight: 500; font-size: 15px; }
+.edit-score { font-family: var(--font-mono); text-align: center; padding: 7px 2px; font-weight: 600; }
+.empty { padding: 30px 16px; text-align: center; color: var(--muted); background: var(--surface); border: 2px dashed var(--line); border-radius: 14px; }
+
+/* Agregar */
+details.add { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; }
+details.add summary { cursor: pointer; padding: 12px 14px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.add summary::-webkit-details-marker { display: none; }
+details.add summary::after { content: "+"; font-family: var(--font-mono); font-size: 18px; color: var(--accent); }
+details.add[open] summary::after { content: "–"; }
+.form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 12px; padding: 4px 14px 16px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); min-width: 0; font-weight: 700; }
+.form .wide { grid-column: 1 / -1; }
+.form input, .form select { background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 15px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--ink); min-width: 0; width: 100%; }
+.form button[type="submit"] { grid-column: 1 / -1; justify-self: start; background: var(--sakura); color: var(--sakura-ink); border: 0; border-radius: 999px; padding: 9px 20px; font-weight: 700; box-shadow: 0 2px 0 color-mix(in srgb, var(--sakura-ink) 40%, transparent); }
+[hidden] { display: none !important; }
+.badge { margin-left: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--pending-bg); color: var(--pending); vertical-align: 1px; }
+.syncbody { display: flex; flex-direction: column; gap: 12px; padding: 4px 14px 16px; }
+.syncbody ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 14px; }
+.syncbody a { color: var(--accent); font-weight: 700; }
+.syncbody label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.syncbody input { background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 15px; letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--ink); width: 100%; min-width: 0; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.status { min-height: 1.3em; margin: 0; font-size: 13px; color: var(--muted); font-weight: 500; }
+.status.err { color: var(--danger); }
+
+@media (max-width: 600px) {
+  .row { grid-template-columns: 46px minmax(0, 1fr) auto; }
+  .ctl { grid-column: 2 / -1; grid-row: 2; justify-content: space-between; }
+  .form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .day .l { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <svg class="petals" viewBox="0 0 120 70" aria-hidden="true">
+      <path transform="translate(8 22) rotate(-25 10 10)" d="M10 0 C16 5 18 12 10 20 C2 12 4 5 10 0Z" opacity=".9"/>
+      <path transform="translate(44 4) rotate(30 10 10) scale(.8)" d="M10 0 C16 5 18 12 10 20 C2 12 4 5 10 0Z" opacity=".6"/>
+      <path transform="translate(70 34) rotate(-60 10 10)" d="M10 0 C16 5 18 12 10 20 C2 12 4 5 10 0Z" opacity=".85"/>
+      <path transform="translate(98 8) rotate(15 10 10) scale(.7)" d="M10 0 C16 5 18 12 10 20 C2 12 4 5 10 0Z" opacity=".5"/>
+      <path transform="translate(96 44) rotate(70 10 10) scale(.9)" d="M10 0 C16 5 18 12 10 20 C2 12 4 5 10 0Z" opacity=".7"/>
+    </svg>
+    <div>
+      <h1>Por ver</h1>
+      <p class="date" id="date"></p>
+    </div>
+    <div class="total" aria-live="polite"><b id="total">0</b><span>capítulos pendientes</span></div>
+  </header>
+
+  <nav class="week" id="week" aria-label="Filtrar por día de emisión"></nav>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Ordenar lista">
+      <button type="button" id="mode-dia" aria-pressed="true">Por día</button>
+      <button type="button" id="mode-score" aria-pressed="false">Por puntaje</button>
+    </div>
+    <label class="chk" for="only"><input type="checkbox" id="only"> Solo con pendientes</label>
+  </div>
+
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <main class="groups" id="list"></main>
+
+  <details class="add" id="addbox">
+    <summary>Agregar anime</summary>
+    <form class="form" id="form" autocomplete="off">
+      <label class="wide" for="f-name">Nombre
+        <input id="f-name" required maxlength="300" placeholder="Título del anime">
+      </label>
+      <label for="f-score">Puntaje
+        <input id="f-score" inputmode="decimal" placeholder="8,5">
+      </label>
+      <label for="f-day">Día
+        <select id="f-day"></select>
+      </label>
+      <label for="f-pending">Cap. pendientes
+        <input id="f-pending" type="number" min="0" max="999" value="0">
+      </label>
+      <button type="submit">Agregar</button>
+    </form>
+  </details>
+
+  <details class="add" id="syncbox">
+    <summary><span>Sincronizar entre dispositivos <span class="badge" id="s-badge">Apagada</span></span></summary>
+    <div class="syncbody">
+      <ol>
+        <li>Crea un token en <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Animes%20por%20ver" target="_blank" rel="noopener">GitHub</a>: déjalo con el único permiso <b>gist</b>, pulsa "Generate token" y cópialo.</li>
+        <li>Pégalo aquí y pulsa Conectar. Tu lista se guarda en un gist privado de tu cuenta.</li>
+        <li>En el otro celular o computadora haz lo mismo con un token tuyo. Encuentra la misma lista solo.</li>
+      </ol>
+      <label id="s-token-wrap" for="s-token">Token de GitHub
+        <input id="s-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_…">
+      </label>
+      <div class="btns">
+        <button type="button" class="bump" id="s-connect">Conectar</button>
+        <button type="button" class="bump" id="s-now" hidden>Sincronizar ahora</button>
+        <button type="button" class="unbump" id="s-off" hidden>Desconectar</button>
+      </div>
+      <p class="status" id="s-status" role="status" aria-live="polite"></p>
+      <p class="hint">El token se queda solo en este navegador y solo da acceso a tus gists. La sincronización funciona con el archivo .html o con la página publicada, no dentro de claude.ai.</p>
+    </div>
+  </details>
+
+  <p class="hint">Cada vez que llega el día de emisión de un anime, se suma un capítulo a sus pendientes. El botón "+1 a todos" de cada día suma uno a todos los animes de ese día a la vez, y "−1" lo deshace. Con − en cada fila marcas un capítulo como visto, y con el lápiz ✎ editas el nombre y el puntaje de ese anime. Todo se guarda en este navegador, sin iniciar sesión. Para verlo igual en otros aparatos, activa la sincronización.</p>
+</div>
+
+<script>
+(function () {
+  var DAYS = [
+    { l: "L", n: "Lunes", k: "Lun" }, { l: "M", n: "Martes", k: "Mar" }, { l: "X", n: "Miércoles", k: "Mié" },
+    { l: "J", n: "Jueves", k: "Jue" }, { l: "V", n: "Viernes", k: "Vie" }, { l: "S", n: "Sábado", k: "Sáb" },
+    { l: "D", n: "Domingo", k: "Dom" }
+  ];
+  var state = { items: new Map(), ready: false, db: null, dbMissing: false, mode: "dia", only: false, filter: null, sure: null, error: null, editing: null, draft: null };
+  var queue = new Map();
+  var store = null;
+  var sureTimer = null, sayTimer = null;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(s) { var p = String(s).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function dayIdx(d) { return (d.getDay() + 6) % 7; }
+  function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function fmtScore(n) { return n == null ? "–" : String(n).replace(".", ","); }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem("anime-prefs") || "{}");
+    if (saved.mode === "score" || saved.mode === "dia") state.mode = saved.mode;
+    state.only = !!saved.only;
+  } catch (e) {}
+  function savePrefs() { try { localStorage.setItem("anime-prefs", JSON.stringify({ mode: state.mode, only: state.only })); } catch (e) {} }
+
+  function clean(id, d) {
+    var day = Number(d.day);
+    if (!(day >= 0 && day <= 6)) day = -1;
+    var pending = Math.max(0, Math.floor(Number(d.pending) || 0));
+    var asOf = /^\d{4}-\d{2}-\d{2}$/.test(String(d.asOf || "")) ? d.asOf : ymd(new Date());
+    var score = d.score == null || d.score === "" || isNaN(Number(d.score)) ? null : Number(d.score);
+    return { id: id, name: String(d.name || "Sin nombre"), score: score, day: day, pending: pending, asOf: asOf };
+  }
+
+  // Pendientes hoy = los guardados + cada vez que cayó el día de emisión después de la fecha guardada.
+  function current(it, today) {
+    if (it.day < 0) return it.pending;
+    var a = parse(it.asOf);
+    var n = Math.round((startOfDay(today) - a) / 86400000);
+    if (n <= 0) return it.pending;
+    var c = Math.floor(n / 7), rem = n % 7;
+    for (var k = 1; k <= rem; k++) if (dayIdx(addDays(a, k)) === it.day) c++;
+    return it.pending + c;
+  }
+
+  function byScore(a, b) {
+    var sa = a.score == null ? -1 : a.score, sb = b.score == null ? -1 : b.score;
+    if (sb !== sa) return sb - sa;
+    return a.name.localeCompare(b.name);
+  }
+
+  function rowHtml(it) {
+    var c = it.cur;
+    var tier = it.score == null ? 0 : Math.max(0, Math.min(60, (it.score - 5) * 14));
+    var hi = it.score != null && it.score >= 9;
+    var opts = '<option value="-1"' + (it.day < 0 ? " selected" : "") + ">Sin día</option>" +
+      DAYS.map(function (d, i) { return '<option value="' + i + '"' + (it.day === i ? " selected" : "") + ">" + d.l + " · " + d.n + "</option>"; }).join("");
+    var sure = state.sure === it.id;
+    var editing = state.editing === it.id;
+    var dr = state.draft || {};
+    var scoreCell = editing
+      ? '<input class="edit-score" data-edit-score inputmode="decimal" value="' + esc(dr.score == null ? "" : dr.score) + '" placeholder="–" aria-label="Puntaje">'
+      : '<div class="score' + (hi ? " hi" : "") + '" style="--tier:' + tier + '%" title="Puntaje">' + fmtScore(it.score) + "</div>";
+    var nameCell = editing
+      ? '<input class="edit-name" data-edit-name maxlength="300" value="' + esc(dr.name == null ? "" : dr.name) + '" aria-label="Nombre del anime">'
+      : '<div class="name" title="' + esc(it.name) + '">' + esc(it.name) + "</div>";
+    var acts = editing
+      ? '<button type="button" class="act ok" data-act="save" aria-label="Guardar cambios" title="Guardar">✓</button>' +
+        '<button type="button" class="act" data-act="cancel" aria-label="Cancelar edición" title="Cancelar">✕</button>'
+      : '<button type="button" class="act" data-act="edit" aria-label="Editar ' + esc(it.name) + '" title="Editar nombre y puntaje">✎</button>' +
+        '<button type="button" class="del' + (sure ? " sure" : "") + '" data-act="del" aria-label="Quitar ' + esc(it.name) + '">' + (sure ? "¿Quitar?" : "×") + "</button>";
+    return '<div class="row" data-id="' + esc(it.id) + '">' +
+      scoreCell +
+      nameCell +
+      '<div class="ctl">' +
+        '<select data-day aria-label="Día de emisión de ' + esc(it.name) + '" class="' + (it.day < 0 ? "none" : "") + '">' + opts + "</select>" +
+        '<div class="count' + (c > 0 ? " has" : "") + '">' +
+          '<button type="button" data-act="watch" aria-label="Vi un capítulo de ' + esc(it.name) + '" title="Vi un capítulo">−</button>' +
+          '<input type="number" min="0" max="999" inputmode="numeric" data-count value="' + c + '" aria-label="Capítulos pendientes de ' + esc(it.name) + '">' +
+          '<button type="button" data-act="add" aria-label="Sumar un capítulo a ' + esc(it.name) + '" title="Sumar un capítulo">+</button>' +
+        "</div>" +
+      "</div>" +
+      '<div class="acts">' + acts + "</div>" +
+      "</div>";
+  }
+
+  function render() {
+    var now = new Date();
+    var today = startOfDay(now);
+    var todayI = dayIdx(today);
+    $("date").textContent = now.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
+
+    var items = [];
+    state.items.forEach(function (v, id) { var it = clean(id, v); it.cur = current(it, today); items.push(it); });
+
+    var total = 0, perDay = [0, 0, 0, 0, 0, 0, 0];
+    items.forEach(function (it) { total += it.cur; if (it.day >= 0) perDay[it.day] += it.cur; });
+    $("total").textContent = total;
+
+    $("week").innerHTML = DAYS.map(function (d, i) {
+      var cls = "day" + (i === todayI ? " today" : "");
+      return '<button type="button" class="' + cls + '" data-filter="' + i + '" aria-pressed="' + (state.filter === i) + '" aria-label="' + d.n + ", " + perDay[i] + ' pendientes">' +
+        '<span class="l">' + d.l + '</span><span class="k">' + d.k + '</span><span class="n' + (perDay[i] > 0 ? " on" : "") + '">' + perDay[i] + "</span></button>";
+    }).join("");
+
+    $("mode-dia").setAttribute("aria-pressed", state.mode === "dia");
+    $("mode-score").setAttribute("aria-pressed", state.mode === "score");
+    $("only").checked = state.only;
+
+    var list = $("list");
+    if (state.dbMissing) {
+      list.innerHTML = '<div class="empty">Esta lista se guarda en tu cuenta. Abre la página con tu sesión de claude.ai iniciada para ver y editar tus animes.</div>';
+      return;
+    }
+    if (state.error) {
+      list.innerHTML = '<div class="empty">No se pudo leer la lista (' + esc(state.error) + "). Recarga la página.</div>";
+      return;
+    }
+    if (!state.ready) {
+      list.innerHTML = '<div class="empty">Cargando tu lista…</div>';
+      return;
+    }
+
+    var shown = items.filter(function (it) {
+      if (state.only && it.cur <= 0) return false;
+      if (state.filter != null && it.day !== state.filter) return false;
+      return true;
+    });
+
+    if (!items.length) {
+      list.innerHTML = '<div class="empty">Todavía no hay animes en la lista (・ω・)<br>Agrega el primero abajo.</div>';
+      return;
+    }
+    if (!shown.length) {
+      list.innerHTML = '<div class="empty">Nada por aquí (˘ω˘) Ningún anime coincide con este filtro.</div>';
+      return;
+    }
+
+    if (state.mode === "score") {
+      shown.sort(byScore);
+      list.innerHTML = '<section><div class="group-head"><h2>Todos, de mayor a menor puntaje</h2><div class="tools"><span class="sum">' +
+        shown.reduce(function (a, it) { return a + it.cur; }, 0) + ' cap.</span></div></div><div class="rows">' +
+        shown.map(rowHtml).join("") + "</div></section>";
+      return;
+    }
+
+    var order = [];
+    for (var k = 0; k < 7; k++) order.push((todayI + k) % 7);
+    order.push(-1);
+    var html = "";
+    order.forEach(function (di) {
+      var g = shown.filter(function (it) { return it.day === di; }).sort(byScore);
+      if (!g.length) return;
+      var sum = g.reduce(function (a, it) { return a + it.cur; }, 0);
+      var head, tools;
+      if (di < 0) {
+        head = "<h2>Sin día de emisión</h2>";
+        tools = '<div class="tools"><span class="sum">' + sum + " cap.</span></div>";
+      } else {
+        head = '<h2><span class="l">' + DAYS[di].l + '</span>' + DAYS[di].n + (di === todayI ? '<span class="tag">Hoy</span>' : "") + "</h2>";
+        tools = '<div class="tools"><span class="sum">' + sum + ' cap.</span>' +
+          '<button type="button" class="unbump" data-bump="' + di + '" data-delta="-1" aria-label="Restar 1 a todos los del ' + DAYS[di].n.toLowerCase() + '" title="Restar 1 a todos">−1</button>' +
+          '<button type="button" class="bump" data-bump="' + di + '" data-delta="1" aria-label="Sumar 1 a todos los del ' + DAYS[di].n.toLowerCase() + '">+1 a todos</button></div>';
+      }
+      html += "<section><div class=\"group-head\">" + head + tools + '</div><div class="rows">' +
+        g.map(rowHtml).join("") + "</div></section>";
+    });
+    list.innerHTML = html;
+  }
+
+  function say(msg, isErr, ttl) {
+    var el = $("status");
+    clearTimeout(sayTimer);
+    el.textContent = msg || "";
+    el.className = "status" + (isErr ? " err" : "");
+    if (msg && ttl) sayTimer = setTimeout(function () { el.textContent = ""; el.className = "status"; }, ttl);
+  }
+
+  function write(id, patch) {
+    if (!store) return;
+    var prev = queue.get(id) || Promise.resolve();
+    var p = prev.catch(function () {}).then(function () { return store.update(id, patch); }).catch(function (e) {
+      say(e && e.code === "invalid_argument" ? "No tienes permiso para cambiar esta lista." : "No se pudo guardar el cambio. Intenta otra vez.", true);
+    });
+    queue.set(id, p);
+  }
+
+  function itemOf(id) {
+    var raw = state.items.get(id);
+    if (!raw) return null;
+    var it = clean(id, raw);
+    it.cur = current(it, startOfDay(new Date()));
+    return it;
+  }
+  function todayStr() { return ymd(new Date()); }
+
+  function bump(di, delta) {
+    var today = startOfDay(new Date()), n = 0;
+    state.items.forEach(function (v, id) {
+      var it = clean(id, v);
+      if (it.day !== di) return;
+      var c = current(it, today);
+      write(id, { pending: Math.max(0, Math.min(999, c + delta)), asOf: todayStr() });
+      n++;
+    });
+    if (n) say((delta > 0 ? "+1" : "−1") + " a " + n + (n === 1 ? " anime" : " animes") + " del " + DAYS[di].n.toLowerCase(), false, 4000);
+  }
+
+  function cancelEdit() { state.editing = null; state.draft = null; render(); }
+  function saveEdit(id) {
+    var d = state.draft || {};
+    var name = String(d.name || "").trim();
+    if (!name) { say("El nombre no puede quedar vacío.", true, 4000); return; }
+    var raw = String(d.score == null ? "" : d.score).trim().replace(",", ".");
+    var score = raw === "" ? null : Number(raw);
+    if (score !== null && (isNaN(score) || score < 0 || score > 10)) { say("El puntaje va de 0 a 10.", true, 4000); return; }
+    write(id, { name: name, score: score });
+    state.editing = null; state.draft = null;
+    render();
+  }
+
+  $("list").addEventListener("click", function (e) {
+    var bb = e.target.closest("[data-bump]");
+    if (bb) { bump(Number(bb.getAttribute("data-bump")), Number(bb.getAttribute("data-delta"))); return; }
+    var b = e.target.closest("[data-act]");
+    if (!b) return;
+    var row = b.closest(".row");
+    var id = row && row.getAttribute("data-id");
+    var it = id && itemOf(id);
+    if (!it) return;
+    var act = b.getAttribute("data-act");
+    if (act === "watch") write(id, { pending: Math.max(0, it.cur - 1), asOf: todayStr() });
+    else if (act === "add") write(id, { pending: Math.min(999, it.cur + 1), asOf: todayStr() });
+    else if (act === "edit") {
+      state.editing = id;
+      state.sure = null;
+      state.draft = { name: it.name, score: it.score == null ? "" : String(it.score).replace(".", ",") };
+      render();
+      var inp = $("list").querySelector("[data-edit-name]");
+      if (inp) { inp.focus(); inp.select(); }
+    }
+    else if (act === "save") saveEdit(id);
+    else if (act === "cancel") cancelEdit();
+    else if (act === "del") {
+      if (state.sure === id) {
+        state.sure = null;
+        clearTimeout(sureTimer);
+        store.remove(id).catch(function () { say("No se pudo quitar el anime.", true); });
+      } else {
+        state.sure = id;
+        clearTimeout(sureTimer);
+        sureTimer = setTimeout(function () { state.sure = null; render(); }, 3500);
+        render();
+      }
+    }
+  });
+
+  $("list").addEventListener("change", function (e) {
+    var row = e.target.closest(".row");
+    var id = row && row.getAttribute("data-id");
+    var it = id && itemOf(id);
+    if (!it) return;
+    if (e.target.matches("[data-day]")) {
+      write(id, { day: Number(e.target.value), pending: it.cur, asOf: todayStr() });
+    } else if (e.target.matches("[data-count]")) {
+      var v = Math.max(0, Math.min(999, Math.floor(Number(e.target.value) || 0)));
+      write(id, { pending: v, asOf: todayStr() });
+    }
+  });
+
+  $("list").addEventListener("input", function (e) {
+    if (!state.draft) return;
+    if (e.target.matches("[data-edit-name]")) state.draft.name = e.target.value;
+    else if (e.target.matches("[data-edit-score]")) state.draft.score = e.target.value;
+  });
+  $("list").addEventListener("keydown", function (e) {
+    if (!state.editing || !e.target.matches("[data-edit-name],[data-edit-score]")) return;
+    if (e.key === "Enter") { e.preventDefault(); saveEdit(state.editing); }
+    else if (e.key === "Escape") cancelEdit();
+  });
+
+  $("week").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-filter]");
+    if (!b) return;
+    var i = Number(b.getAttribute("data-filter"));
+    state.filter = state.filter === i ? null : i;
+    render();
+  });
+  $("mode-dia").addEventListener("click", function () { state.mode = "dia"; savePrefs(); render(); });
+  $("mode-score").addEventListener("click", function () { state.mode = "score"; savePrefs(); render(); });
+  $("only").addEventListener("change", function (e) { state.only = e.target.checked; savePrefs(); render(); });
+
+  $("f-day").innerHTML = '<option value="-1">Sin día</option>' + DAYS.map(function (d, i) { return '<option value="' + i + '">' + d.l + " · " + d.n + "</option>"; }).join("");
+  $("f-day").value = String(dayIdx(new Date()));
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!store) return;
+    var name = $("f-name").value.trim();
+    if (!name) return;
+    var raw = $("f-score").value.trim().replace(",", ".");
+    var score = raw === "" ? null : Number(raw);
+    if (score !== null && (isNaN(score) || score < 0 || score > 10)) { say("El puntaje va de 0 a 10.", true); return; }
+    var pending = Math.max(0, Math.min(999, Math.floor(Number($("f-pending").value) || 0)));
+    store.add({ name: name, score: score, day: Number($("f-day").value), pending: pending, asOf: todayStr() })
+      .then(function () { say("Agregado: " + name, false, 4000); $("f-name").value = ""; $("f-score").value = ""; $("f-pending").value = "0"; $("f-name").focus(); })
+      .catch(function (err) { say(err && err.code === "invalid_argument" ? "No tienes permiso para editar esta lista." : "No se pudo agregar. Intenta otra vez.", true); });
+  });
+
+  render();
+
+  var timer = setTimeout(function () { if (!state.ready && !state.dbMissing) say("La lista tarda en responder. Revisa tu conexión.", true); }, 10000);
+
+  // Lista inicial: se usa solo la primera vez que se abre la página en un navegador.
+  var SEED = [
+    ["Tensei Goblin Dakedo Shitsumon Aru?", 7, 0],
+    ["PSYЯEN", 6.5, 0],
+    ["Doumo, Suki na Hito ni Horegusuri wo Irai Sareta Majo desu.", 9, 0],
+    ["Tsuihou Sareta Cheat Fuyo Majutsushi wa Kimama na Second Life wo Ouka Suru.: Ore wa Buki dake ja Naku, Arayuru Mono ni \"Kyouka Point\" wo Fuyo Dekiru shi, Ore no Ishi de Itsudemo Kouka wo Kaijo Dekiru kedo, Nokotta Hitotachi Daijoubu?", 9, 1],
+    ["Shiotaiou no Satou-san ga Ore ni dake Amai", 7, 1],
+    ["Choujun! Choujou Senpai", 6.5, 1],
+    ["Sekai Saikyou no Majo, Hajimemashita", 8, 2],
+    ["Magic Knight Rayearth (2026)", 8.5, 2],
+    ["Juuоu Mujin Dandivine", 6, 2],
+    ["FX Senshi Kurumi-chan", 9, 3],
+    ["Toaru Anbu no ITEM", 9.5, 4],
+    ["Hotaru no Yomeiri", 8.5, 4],
+    ["Vertex Force", 6.5, 5],
+    ["Tensei shita Dai Seijo wa, Seijo de Aru Koto wo Hita Kakusu", 8, 5],
+    ["Shuiro no Kamen", 8.5, 5],
+    ["Romelia Senki: Maou wo Taoshita nochi mo Jinrui Yabasou dakara Guntai Soshiki Shita", 7.5, 5],
+    ["Magical★Explorer: Eroge no Yuujin Chara ni Tensei Shitakedo, Game Chishiki Tsukatte Jiyuu ni Ikiru", 7.5, 5],
+    ["Kyoufu Collector", 7, 5],
+    ["Kashita Maryoku wa [Revo Barai] de Kyousei Choushuu", 7.5, 5],
+    ["#Zombie Sagashitemasu", 7, 5],
+    ["Yowaki MAX Reijou Nano ni, Ratsuwan Konyakusha-sama no Kake ni Notte Shimatta", 7, 6],
+    ["Tempal: Item no Chikara", 7.5, 6],
+    ["Shinja Zero no Megami-sama to Hajimeru Isekai Kouryaku", 7, 6],
+    ["Mezametara Saikyou Soubi to Uchuusen-mochi datta node, Ikkodate Mezashite Youhei to shite Jiyuu ni Ikitai", 8, 6],
+    ["From Far Away", null, 6]
+  ];
+
+  // Guardado en el propio navegador: no pide sesión y funciona también como archivo .html suelto.
+  function makeLocalStore() {
+    var KEY = "anime-por-ver-v1";
+    var items = null;
+    var subs = [];
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) { var o = JSON.parse(raw); if (o && o.items) return o.items; }
+      } catch (e) {}
+      var seed = {};
+      SEED.forEach(function (r, i) { seed["a" + (i < 9 ? "0" : "") + (i + 1)] = { name: r[0], score: r[1], day: r[2], pending: 0, asOf: "2026-11-02" }; });
+      return seed;
+    }
+    function persist() { try { localStorage.setItem(KEY, JSON.stringify({ items: items })); } catch (e) {} }
+    var changeSubs = [];
+    function snapshot() { var m = new Map(); Object.keys(items).forEach(function (k) { if (!items[k].deleted) m.set(k, items[k]); }); return m; }
+    function changed() { persist(); emit(); changeSubs.forEach(function (f) { f(); }); }
+    function emit() { var m = snapshot(); subs.forEach(function (f) { f(m); }); }
+    items = load();
+    return {
+      subscribe: function (cb) { subs.push(cb); cb(snapshot()); },
+      add: function (d) { var id = "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); items[id] = Object.assign({}, d, { u: Date.now() }); changed(); return Promise.resolve(); },
+      update: function (id, p) { if (items[id] && !items[id].deleted) { items[id] = Object.assign({}, items[id], p, { u: Date.now() }); changed(); } return Promise.resolve(); },
+      remove: function (id) { items[id] = { deleted: true, u: Date.now() }; changed(); return Promise.resolve(); },
+      raw: function () { return JSON.parse(JSON.stringify(items)); },
+      replace: function (m) { items = m; persist(); emit(); },
+      onChange: function (f) { changeSubs.push(f); }
+    };
+  }
+
+  // ---- Sincronización opcional entre dispositivos, con un gist privado de GitHub ----
+  var SYNC_KEY = "anime-sync-v1";
+  var GFILE = "anime-por-ver.json";
+  var sync = { token: "", gist: "", busy: false, again: false, timer: null, last: 0 };
+  try { var sv = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}"); sync.token = sv.token || ""; sync.gist = sv.gist || ""; } catch (e) {}
+  function saveSync() { try { localStorage.setItem(SYNC_KEY, JSON.stringify({ token: sync.token, gist: sync.gist })); } catch (e) {} }
+  function sstat(msg, err) { var el = $("s-status"); el.textContent = msg || ""; el.className = "status" + (err ? " err" : ""); }
+  function updateSyncUI() {
+    var on = !!sync.token;
+    $("s-token-wrap").hidden = on;
+    $("s-connect").hidden = on;
+    $("s-now").hidden = !on;
+    $("s-off").hidden = !on;
+    $("s-badge").textContent = on ? "Activa" : "Apagada";
+  }
+  function gh(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ "Accept": "application/vnd.github+json", "Authorization": "Bearer " + sync.token }, opts.headers || {});
+    return fetch("https://api.github.com" + path, opts).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error("token");
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    });
+  }
+  function gistBody(items) { var files = {}; files[GFILE] = { content: JSON.stringify({ v: 1, items: items }) }; return files; }
+  function findGist() {
+    return gh("/gists?per_page=100").then(function (list) {
+      for (var i = 0; i < list.length; i++) if (list[i].files && list[i].files[GFILE]) return list[i].id;
+      return null;
+    });
+  }
+  function createGist(items) {
+    return gh("/gists", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ description: "Animes por ver (respaldo automático)", public: false, files: gistBody(items) }) })
+      .then(function (g) { return g.id; });
+  }
+  function readGist(id) {
+    return gh("/gists/" + id).then(function (g) {
+      var f = g.files && g.files[GFILE];
+      if (!f) return {};
+      var text = f.truncated && f.raw_url ? fetch(f.raw_url).then(function (r) { return r.text(); }) : Promise.resolve(f.content);
+      return text.then(function (t) { return (JSON.parse(t) || {}).items || {}; });
+    });
+  }
+  function writeGist(id, items) {
+    return gh("/gists/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ files: gistBody(items) }) });
+  }
+  function sig(it) { return [it.name, it.score, it.day, it.pending, it.asOf, it.deleted ? 1 : 0, it.u || 0].join("|"); }
+  function differs(a, b) {
+    var ids = Object.keys(a).concat(Object.keys(b));
+    for (var i = 0; i < ids.length; i++) { var x = a[ids[i]], y = b[ids[i]]; if (!x || !y || sig(x) !== sig(y)) return true; }
+    return false;
+  }
+  // Cada anime se queda con la versión más reciente, venga de este aparato o del otro.
+  function mergeItems(a, b) {
+    var out = {}, ids = {};
+    Object.keys(a).forEach(function (k) { ids[k] = 1; });
+    Object.keys(b).forEach(function (k) { ids[k] = 1; });
+    Object.keys(ids).forEach(function (id) {
+      var x = a[id], y = b[id];
+      out[id] = !x ? y : !y ? x : ((y.u || 0) > (x.u || 0) ? y : x);
+    });
+    return out;
+  }
+  function doSync() {
+    if (!sync.token) return Promise.resolve();
+    if (sync.busy) { sync.again = true; return Promise.resolve(); }
+    sync.busy = true;
+    sstat("Sincronizando…");
+    var local = store.raw();
+    var find = sync.gist ? Promise.resolve(sync.gist) : findGist();
+    return find.then(function (id) {
+      if (!id) return createGist(local).then(function (nid) { sync.gist = nid; saveSync(); return null; });
+      sync.gist = id; saveSync();
+      return readGist(id).then(function (remote) {
+        var merged = mergeItems(store.raw(), remote);
+        if (differs(merged, store.raw())) store.replace(merged);
+        if (differs(merged, remote)) return writeGist(id, merged);
+      });
+    }).then(function () {
+      sync.last = Date.now();
+      sstat("Sincronizado a las " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }) + ".");
+    }).catch(function (e) {
+      if (e && e.message === "token") sstat("GitHub no aceptó el token. Revisa que sea válido y tenga el permiso gist.", true);
+      else sstat("No se pudo conectar con GitHub. Se reintenta cuando cambies algo.", true);
+    }).then(function () {
+      sync.busy = false;
+      if (sync.again) { sync.again = false; scheduleSync(); }
+    });
+  }
+  function scheduleSync() {
+    if (!sync.token) return;
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(doSync, 2000);
+  }
+
+  store = makeLocalStore();
+  store.subscribe(function (m) {
+    state.items = m;
+    state.ready = true;
+    clearTimeout(timer);
+    render();
+  });
+  store.onChange(scheduleSync);
+
+  $("s-connect").addEventListener("click", function () {
+    var t = $("s-token").value.trim();
+    if (!t) { sstat("Pega primero tu token de GitHub.", true); return; }
+    sync.token = t; sync.gist = ""; saveSync();
+    $("s-token").value = "";
+    updateSyncUI();
+    doSync();
+  });
+  $("s-now").addEventListener("click", function () { doSync(); });
+  $("s-off").addEventListener("click", function () {
+    sync.token = ""; sync.gist = ""; saveSync();
+    updateSyncUI();
+    sstat("Sincronización apagada. Tu lista sigue guardada en este navegador.");
+  });
+  updateSyncUI();
+  if (sync.token) doSync();
+
+  // Mantener el "hoy" al día: pasada la medianoche y al volver a la pestaña.
+  function untilMidnight() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5) - n; }
+  function arm() { setTimeout(function () { render(); arm(); }, untilMidnight()); }
+  arm();
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) return;
+    render();
+    if (sync.token && Date.now() - sync.last > 20000) doSync();
+  });
+})();
+</script>
